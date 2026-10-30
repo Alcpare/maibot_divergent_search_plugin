@@ -1,0 +1,13 @@
+# 运行时生成，含用户真实 API Key，绝不能进仓库
+/config.toml
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
