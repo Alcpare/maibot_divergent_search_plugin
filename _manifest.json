@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "发散搜索结果",
   "description": "给麦麦提供联网搜索能力（百度千帆 AI Search）。搜索结果后可附加可编辑的提示词，让模型用自己的话说，避免把搜索内容整段念给用户。",
   "author": {

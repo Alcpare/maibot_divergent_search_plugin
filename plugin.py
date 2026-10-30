@@ -127,13 +127,11 @@ class ToolSectionConfig(PluginConfigBase):
 
     enable_search: bool = Field(
         default=True,
-        description="是否提供联网搜索工具",
-        json_schema_extra={"label": "启用搜索"},
-    )
-    search_description: str = Field(
-        default=_DEFAULT_TOOL_DESC,
-        description="搜索工具的描述，会展示给模型（改完需重载插件）",
-        json_schema_extra={"label": "搜索工具描述"},
+        description="关闭后搜索工具仍会注册给模型，但调用时直接返回「搜索已关闭」，不再发起请求",
+        json_schema_extra={
+            "label": "启用搜索",
+            "hint": "关掉后不会真的联网；想彻底不暴露工具请直接禁用整个插件",
+        },
     )
 
 
@@ -186,11 +184,17 @@ class QianfanSearchPlugin(MaiBotPlugin):
     async def on_load(self) -> None:
         cfg = self.config.qianfan
         self._lock = asyncio.Lock()
+        enabled = self.config.tools.enable_search
         self.ctx.logger.info(
-            f"[千帆搜索] 已加载：搜索={self.config.tools.enable_search} "
+            f"[千帆搜索] 已加载：搜索={'开' if enabled else '关（工具会注册但调用时直接返回不可用）'} "
             f"结果提示词={self.config.prompt.enabled} "
             f"key={'已填' if cfg.api_key.strip() else '未填'}"
         )
+        if not enabled:
+            self.ctx.logger.warning(
+                "[千帆搜索] enable_search 已关闭：模型仍会看到 web_search 工具，但调用时只返回"
+                "「搜索已关闭」。如果想彻底不暴露该工具，请在插件管理里禁用整个插件。"
+            )
         self._log_prompt_preview()
 
     async def on_unload(self) -> None:
@@ -331,6 +335,9 @@ class QianfanSearchPlugin(MaiBotPlugin):
 
         del kwargs
         cfg = self.config
+        if not cfg.tools.enable_search:
+            # 配置里关掉了搜索：不发起任何请求，直接让模型自己说不知道
+            return "搜索已关闭，直接说不知道。"
         query = (query or "").strip()
         if not query:
             return "搜索词是空的，直接说不知道。"
